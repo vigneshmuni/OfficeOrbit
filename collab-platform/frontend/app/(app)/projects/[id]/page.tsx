@@ -152,6 +152,18 @@ export default function ProjectDetailPage() {
     },
   });
 
+  const deleteProjectMutation = useMutation({
+    mutationFn: () => api.projects.delete(projectId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      showToast.success('Project deleted successfully');
+      router.push('/projects');
+    },
+    onError: (err: any) => {
+      showToast.error(err.response?.data?.message || 'Failed to delete project');
+    },
+  });
+
   const archiveProjectMutation = useMutation({
     mutationFn: () => api.projects.archive(projectId),
     onSuccess: () => {
@@ -289,17 +301,31 @@ export default function ProjectDetailPage() {
           !isViewer && (
             <div className="flex items-center gap-3">
               {canManageProject && (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    if (confirm('Are you sure you want to archive this project?')) {
-                      archiveProjectMutation.mutate();
-                    }
-                  }}
-                  isLoading={archiveProjectMutation.isPending}
-                >
-                  Archive Project
-                </Button>
+                <>
+                  <Button
+                    variant="danger"
+                    onClick={() => {
+                      if (confirm('Are you sure you want to permanently delete this project? All associated tasks and comments will be erased.')) {
+                        deleteProjectMutation.mutate();
+                      }
+                    }}
+                    isLoading={deleteProjectMutation.isPending}
+                    leftIcon={<Trash2 className="w-4 h-4" />}
+                  >
+                    Delete Project
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      if (confirm('Are you sure you want to archive this project?')) {
+                        archiveProjectMutation.mutate();
+                      }
+                    }}
+                    isLoading={archiveProjectMutation.isPending}
+                  >
+                    Archive Project
+                  </Button>
+                </>
               )}
               <Button onClick={() => openCreateTaskModal()} leftIcon={<Plus className="w-4 h-4" />}>
                 Create Task
@@ -585,7 +611,7 @@ export default function ProjectDetailPage() {
           </div>
 
           <div className="flex items-center justify-between pt-4">
-            {editingTask && canManageProject ? (
+            {editingTask && !isViewer ? (
               <Button
                 type="button"
                 variant="danger"

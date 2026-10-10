@@ -51,6 +51,7 @@ export const api = {
     create: async (data: any) => (await axiosInstance.post('/projects', data)).data,
     update: async (id: string, data: any) => (await axiosInstance.put(`/projects/${id}`, data)).data,
     archive: async (id: string) => (await axiosInstance.patch(`/projects/${id}/archive`)).data,
+    delete: async (id: string) => (await axiosInstance.delete(`/projects/${id}`)).data,
     addMember: async (id: string, data: any) => (await axiosInstance.post(`/projects/${id}/members`, data)).data,
     removeMember: async (id: string, userId: string) => (await axiosInstance.delete(`/projects/${id}/members/${userId}`)).data,
     getActivity: async (id: string, page = 1, limit = 30) =>

@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, FolderKanban, Users, CheckSquare, Calendar } from 'lucide-react';
+import { Plus, Search, FolderKanban, Users, CheckSquare, Calendar, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import { Header } from '@/components/layout/Header';
@@ -29,6 +29,17 @@ export default function ProjectsPage() {
   const { data: projectsData, isLoading } = useQuery({
     queryKey: ['projects'],
     queryFn: () => api.projects.list(),
+  });
+
+  const deleteProjectMutation = useMutation({
+    mutationFn: (id: string) => api.projects.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      showToast.success('Project deleted successfully');
+    },
+    onError: (err: any) => {
+      showToast.error(err.response?.data?.message || 'Failed to delete project');
+    },
   });
 
   const createMutation = useMutation({
@@ -116,9 +127,27 @@ export default function ProjectsPage() {
                     <h3 className="font-bold text-lg text-gray-100 group-hover:text-indigo-300 transition-colors line-clamp-1">
                       {project.name}
                     </h3>
-                    <Badge variant={project.status === 'ACTIVE' ? 'success' : 'default'}>
-                      {project.status}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={project.status === 'ACTIVE' ? 'success' : 'default'}>
+                        {project.status}
+                      </Badge>
+                      {canCreateProject && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (confirm(`Are you sure you want to delete project "${project.name}"? All tasks and comments will be permanently deleted.`)) {
+                              deleteProjectMutation.mutate(project.id);
+                            }
+                          }}
+                          className="p-1 text-gray-500 hover:text-rose-400 transition-colors cursor-pointer"
+                          title="Delete Project"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <p className="text-xs text-gray-400 mt-2 line-clamp-3 leading-relaxed">

@@ -167,6 +167,20 @@ export class ProjectsService {
     return project;
   }
 
+  async delete(id: string, userId: string, globalRole: GlobalRole) {
+    if (globalRole !== GlobalRole.ADMIN) {
+      const member = await this.assertProjectAccess(id, userId, globalRole);
+      if (member?.projectRole !== ProjectRole.PROJECT_MANAGER) {
+        throw new ForbiddenException('Only project managers or admins can delete projects');
+      }
+    }
+    const project = await this.prisma.project.delete({
+      where: { id },
+    });
+    this.gateway.emitToAll('project:deleted', { id });
+    return { success: true, project };
+  }
+
   async addMember(projectId: string, dto: AddMemberDto, requesterId: string, globalRole: GlobalRole) {
     const member = await this.assertProjectAccess(projectId, requesterId, globalRole);
     if (

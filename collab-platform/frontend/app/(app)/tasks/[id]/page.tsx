@@ -87,6 +87,18 @@ export default function TaskDetailPage() {
     );
   }
 
+  const deleteTaskMutation = useMutation({
+    mutationFn: () => api.tasks.delete(taskId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project-tasks', task?.projectId] });
+      showToast.success('Task deleted successfully');
+      router.push(`/projects/${task?.projectId}`);
+    },
+    onError: (err: any) => {
+      showToast.error(err.response?.data?.message || 'Failed to delete task');
+    },
+  });
+
   const isViewer = user?.globalRole === 'VIEWER';
 
   return (
@@ -95,13 +107,29 @@ export default function TaskDetailPage() {
         title={`Task #${task.id.slice(0, 8)}`}
         subtitle={`Project: ${task.project?.name}`}
         action={
-          <Button
-            variant="ghost"
-            onClick={() => router.push(`/projects/${task.projectId}`)}
-            leftIcon={<ArrowLeft className="w-4 h-4" />}
-          >
-            Back to Board
-          </Button>
+          <div className="flex items-center gap-3">
+            {!isViewer && (
+              <Button
+                variant="danger"
+                onClick={() => {
+                  if (confirm('Are you sure you want to delete this task?')) {
+                    deleteTaskMutation.mutate();
+                  }
+                }}
+                isLoading={deleteTaskMutation.isPending}
+                leftIcon={<Trash2 className="w-4 h-4" />}
+              >
+                Delete Task
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              onClick={() => router.push(`/projects/${task.projectId}`)}
+              leftIcon={<ArrowLeft className="w-4 h-4" />}
+            >
+              Back to Board
+            </Button>
+          </div>
         }
       />
 

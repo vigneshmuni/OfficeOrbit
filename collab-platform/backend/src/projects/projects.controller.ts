@@ -49,6 +49,11 @@ export class ProjectsController {
     return this.projectsService.archive(id, req.user.userId, req.user.globalRole);
   }
 
+  @Delete(':id')
+  delete(@Param('id') id: string, @Request() req: any) {
+    return this.projectsService.delete(id, req.user.userId, req.user.globalRole);
+  }
+
   @Post(':id/members')
   addMember(@Param('id') id: string, @Body() dto: AddMemberDto, @Request() req: any) {
     return this.projectsService.addMember(id, dto, req.user.userId, req.user.globalRole);
